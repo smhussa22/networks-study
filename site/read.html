@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Read — CIS*3210 Midterm Study</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect y='1' width='16' height='2.5' rx='1' fill='%232546c9'/%3E%3Crect y='5' width='11' height='2.5' rx='1' fill='%230e8570'/%3E%3Crect y='9' width='14' height='2.5' rx='1' fill='%23a8378a'/%3E%3Crect y='13' width='8' height='2.5' rx='1' fill='%23b98200'/%3E%3C/svg%3E">
+</head>
+<body data-page="read">
+  <header id="site-header"></header>
+  <main>
+    <div class="page-head">
+      <h1>Read</h1>
+      <p>Everything on the midterm, in lecture order. Each section names the lecture and textbook chapter it comes from, and the blue-edged boxes are demos you can step through.</p>
+    </div>
+
+    <div class="reading">
+      <nav class="toc" aria-label="Sections">
+        <ol>
+          <li><a href="#intro">1. Introduction to networking</a></li>
+          <li><a href="#internet">2. Internetworking and the edge</a></li>
+          <li><a href="#http">3. Application layer: HTTP</a></li>
+          <li><a href="#dns">4. DNS and email</a></li>
+          <li><a href="#sockets">5. Socket programming</a></li>
+          <li><a href="#transport">6. Transport layer</a></li>
+          <li><a href="#udp">7. UDP</a></li>
+          <li><a href="#rdt">8. Reliable data transfer</a></li>
+          <li><a href="#tcp">9. TCP</a></li>
+          <li><a href="#cheat">Cheat sheet</a></li>
+        </ol>
+      </nav>
+
+      <article class="article">
+
+<section id="intro">
+<h2>1. Introduction to networking</h2>
+<p class="source">Week 0 lecture, textbook Ch. 1</p>
+<p class="lead">Networks went from a research topic with a few dozen sites to essential infrastructure. Protocols and layering are what keep that complexity manageable.</p>
+
+<h3>Growth, value and fragility</h3>
+<ul>
+<li>Networks support business (advertising, shipping, billing), education and government, and they created telecommuting, new industries and demand for network professionals.</li>
+<li>More connected users and services add <strong>value</strong>: coordination, reach and network effects.</li>
+<li>They also add <strong>fragility</strong>: dependency, a larger attack surface, congestion risk, and shared components whose failure affects many activities.</li>
+</ul>
+
+<h3>Why networking seems complex</h3>
+<p>Many technologies, combined in many ways; no single theory explaining how everything relates; incompatible standards from different bodies; models that are too simple or too complex; rapid change; and inconsistent terminology (marketing labels, reused terms, overlapping acronyms).</p>
+
+<h3>Five key areas</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Area</th><th>Covers</th></tr></thead>
+<tbody>
+<tr><td>Network applications</td><td>How software communicates using sockets and APIs</td></tr>
+<tr><td>Data communications</td><td>Signals, media, encoding, bandwidth and errors</td></tr>
+<tr><td>Packet switching</td><td>LANs, WANs, frames, MAC, Ethernet, Wi-Fi</td></tr>
+<tr><td>TCP/IP internetworking</td><td>Addressing, routing, TCP, UDP, core protocols</td></tr>
+<tr><td>Cross-cutting topics</td><td>Performance, security, management, IoT</td></tr>
+</tbody></table></div>
+
+<h3>Circuit switching vs packet switching</h3>
+<ul>
+<li><strong>Circuit switching</strong> (telephone, telegraph): establish a dedicated end-to-end circuit, then transmit.</li>
+<li><strong>Packet switching</strong> (1960s, the basis of the Internet): no dedicated circuit; store-and-forward. Users share resources, data is divided into packets, each packet carries a destination address, and devices forward using forwarding information.</li>
+<li>Packet networks must solve addressing, discovery, packet sizing and framing, medium sharing, wireless adaptation and speed/range/cost trade-offs.</li>
+<li>In the 1970s, the Internet joined different networks with open standards: the <strong>TCP/IP suite</strong>, with a common packet format and addressing.</li>
+</ul>
+
+<h3>Protocols and layering</h3>
+<p>Communication needs a sender and receiver that agree on how data is represented, how communication begins and proceeds, and how messages are formatted. A <strong>protocol</strong> defines those rules, including error handling. Protocols work together in a <strong>suite</strong>, each handling one function.</p>
+<p><strong>Layering</strong> gives structure and modularity: changes inside one layer are transparent to the others. In the airline analogy, changing the gate procedure does not change ticketing or baggage.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Layer</th><th>Job</th><th>Examples</th><th>Data unit</th></tr></thead>
+<tbody>
+<tr><td>Application</td><td>Network applications, message formats and meanings</td><td>HTTP, IMAP, SMTP, DNS</td><td>Message</td></tr>
+<tr><td>Transport</td><td>Process-to-process data transfer</td><td>TCP, UDP</td><td>Segment</td></tr>
+<tr><td>Network</td><td>Routes datagrams across networks</td><td>IP, routing protocols</td><td>Datagram</td></tr>
+<tr><td>Link</td><td>Moves data between neighbouring devices</td><td>Ethernet, Wi-Fi, PPP</td><td>Frame</td></tr>
+<tr><td>Physical</td><td>Bits through the medium</td><td>Hardware</td><td>Bits</td></tr>
+</tbody></table></div>
+<div class="demo" data-demo="encapsulation"></div>
+<div class="callout">If a message is split into three transport segments, each segment normally gets its own datagram and frame: three network headers and three sets of link overhead on that link. A link-layer switch processes only link and physical; a router processes network, link and physical.</div>
+</section>
+
+<section id="internet">
+<h2>2. Internetworking and the network edge</h2>
+<p class="source">Week 1 lecture, textbook Ch. 1</p>
+<p class="lead">No single network technology fits every need, so routers and internet protocols join different networks into one virtual network.</p>
+
+<h3>Why internetworking</h3>
+<ul>
+<li>LANs are optimized for high speed over short distances; WANs for long distances. Organizations end up with several technologies, such as Ethernet in each office and leased circuits between cities.</li>
+<li>Replacing both with one technology that spans both distances could be worse: it may suit neither environment. <strong>Universal service needs interoperability, not identical networks.</strong></li>
+<li><strong>Universal service</strong>: any computer can reach any other, like the phone system. Separate networks were "islands" in the 1970s.</li>
+<li>You cannot just wire heterogeneous networks together: each technology has its own frame format and addressing, and bridging does not work across them.</li>
+</ul>
+
+<h3>Routers and the internet</h3>
+<ul>
+<li>A <strong>router</strong> is dedicated hardware with a processor, memory and an interface per network. It can join two LANs, a LAN and a WAN, or two WANs.</li>
+<li>Routers carry a common internet packet and <strong>re-encapsulate it in each link's native frame</strong>. So "networks that cannot exchange native frames cannot be one internet" is wrong.</li>
+<li>Three routers can join four networks; one big router could too, but organizations use several for load balancing, performance and redundancy. Protocol software reroutes around failures.</li>
+<li>Topology depends on bandwidth, expected traffic, reliability needs, cost and router performance.</li>
+<li><strong>Intranet</strong>: owned by one organization for its employees. <strong>Internet</strong> (capital I): the global Internet and its protocols. The line is blurred because both use the same gear and software and intranets connect through gateways.</li>
+<li>The Internet is a <strong>virtual network</strong>: software hides physical connections, physical addresses and routing, giving the illusion of one network.</li>
+</ul>
+
+<h3>Nuts and bolts</h3>
+<ul>
+<li><strong>Hosts / end systems</strong> run applications at the edge (clients and servers; servers often in data centres).</li>
+<li><strong>Packet switches</strong>: a <em>switch</em> connects devices within a LAN; a <em>router</em> connects networks.</li>
+<li><strong>Links</strong>: fibre, copper, radio, satellite, with a transmission rate (bandwidth) in bits per second.</li>
+<li>Standards: <strong>RFCs</strong> define protocols; the <strong>IETF</strong> develops many of them.</li>
+<li><strong>Access network</strong>: links an end system to its first (edge) router. <strong>Network core</strong>: the mesh of routers and links, a network of networks.</li>
+</ul>
+
+<h3>Access networks and media</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Access</th><th>Key facts</th></tr></thead>
+<tbody>
+<tr><td>Cable (HFC)</td><td>Fibre + coax, FDM channels; <strong>shared</strong> to the cable headend; asymmetric (down 40 Mbps–1.2 Gbps, up 30–100 Mbps). Only the headend sends downstream, so no downstream collisions.</td></tr>
+<tr><td>DSL</td><td>Existing phone line to the central office DSLAM; <strong>dedicated</strong>; down 24–52 Mbps, up 3.5–16 Mbps; voice and data at different frequencies.</td></tr>
+<tr><td>Home network</td><td>Devices on Wi-Fi or Ethernet, a home router, and a modem (often combined as a gateway).</td></tr>
+<tr><td>Wireless</td><td>WLAN (Wi-Fi 802.11, ~100 ft) or cellular 4G/5G (tens to hundreds of Mbps).</td></tr>
+<tr><td>Enterprise</td><td>Ethernet at 100 Mbps, 1 Gbps, 10 Gbps; Wi-Fi access points.</td></tr>
+<tr><td>Data centre</td><td>Tens to hundreds of Gbps links between thousands of servers.</td></tr>
+</tbody></table></div>
+<ul>
+<li><strong>Guided</strong> media: twisted pair (Cat 5e: 100 Mbps–1 Gbps; Cat 6: 10 Gbps), coax (bidirectional, broadband channels), fibre (light pulses, 10s–100s Gbps, low error rate, immune to EM noise).</li>
+<li><strong>Unguided</strong>: radio. Usually shared and half-duplex; affected by reflection, obstruction, interference and noise. Wi-Fi, 4G/5G, Bluetooth, terrestrial microwave, satellite (GEO has much higher delay than LEO such as Starlink).</li>
+</ul>
+
+<h3>Delay and throughput</h3>
+<p>The lecture gives transmission delay; the textbook questions use the rest.</p>
+<div class="formula">d_trans = L / R &nbsp;&nbsp; d_prop = d / s &nbsp;&nbsp; d_nodal = d_proc + d_queue + d_trans + d_prop</div>
+<ul>
+<li>Propagation delay depends on distance and speed only, not packet length. Queuing delay is the part that varies from packet to packet.</li>
+<li>Store-and-forward over N links: one packet takes N·L/R; P packets back to back take (N + P − 1)·L/R.</li>
+<li>Throughput of links in series is the <strong>bottleneck</strong> (smallest) rate.</li>
+<li>Bandwidth-delay product R × d_prop = most bits in the link at once. Width of one bit = s / R.</li>
+</ul>
+<div class="demo" data-demo="delay"></div>
+</section>
+
+<section id="http">
+<h2>3. Application layer: HTTP</h2>
+<p class="source">HTTP lecture, textbook Ch. 2.1–2.2</p>
+<p class="lead">Applications run only at the edge, talk through sockets, and pick a transport service. HTTP evolved from one object per connection to multiplexed streams over QUIC.</p>
+
+<h3>Network applications</h3>
+<ul>
+<li>Application logic runs on end hosts; routers only forward packets. That is why an app can be updated worldwide without touching routers.</li>
+<li><strong>Client-server</strong>: always-on server with a fixed, well-known IP, often in a data centre; clients initiate, may be intermittent, have dynamic IPs and do not talk to each other directly.</li>
+<li><strong>P2P</strong>: no always-on server; peers request and provide; self-scaling; intermittent; harder to manage; cheaper (BitTorrent). Each session still has a client side and a server side.</li>
+<li>The process that initiates contact is the <strong>client</strong>; the one that waits is the <strong>server</strong>.</li>
+<li>A <strong>socket</strong> is the door between a process and the network. A process is addressed by <strong>IP address (host) + port number (process)</strong>, such as HTTP 80 and SMTP 25.</li>
+</ul>
+
+<h3>What transport services apps need</h3>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>TCP</th><th>UDP</th></tr></thead>
+<tbody>
+<tr><td>Delivery</td><td>Reliable, connection-oriented</td><td>Best effort, connectionless</td></tr>
+<tr><td>Flow and congestion control</td><td>Yes</td><td>No</td></tr>
+<tr><td>Setup</td><td>Connection before data</td><td>None</td></tr>
+<tr><td>Timing, minimum throughput</td><td>No guarantees</td><td>No guarantees</td></tr>
+<tr><td>Built-in security</td><td>No</td><td>No</td></tr>
+</tbody></table></div>
+<p>Apps differ in loss tolerance (file transfer: none; real-time media: some), timing (calls, games), throughput (minimum-rate vs elastic) and security.</p>
+
+<h3>HTTP basics</h3>
+<ul>
+<li>The Web's protocol: client-server, request-response. HTTP/1.1 and HTTP/2 run over TCP, port 80 (443 for HTTPS).</li>
+<li><strong>Stateless</strong>: the server keeps no client state between requests.</li>
+<li><strong>Non-persistent</strong>: one object per TCP connection, so a page with 10 images opens 11 connections.</li>
+<li><strong>Persistent</strong> (HTTP/1.1, HTTP/2): the connection stays open for many objects, even several pages on the same server; pipelining is possible; the server closes it after an idle timeout to reclaim resources.</li>
+</ul>
+<div class="formula">Non-persistent response time per object ≈ 2 RTT + transmission time</div>
+<p>One RTT for the first two handshake steps, one for the request (sent with the third ACK) and response. Persistent HTTP fetching eleven objects one at a time saves ten setup RTTs, but each request still costs an RTT.</p>
+<div class="demo" data-demo="http"></div>
+
+<h3>Messages</h3>
+<pre><code>GET /index.html HTTP/1.1
+Host: www-net.cs.umass.edu
+User-Agent: Mozilla/5.0 ...
+Accept-Language: en-us,en;q=0.5
+Connection: keep-alive
+(blank line)</code></pre>
+<ul>
+<li>Request line (method, path, version), header lines, blank line, body (empty for GET, data for POST).</li>
+<li>Methods: <strong>GET</strong> fetch, <strong>POST</strong> data in body, <strong>HEAD</strong> headers only, <strong>PUT</strong> create or replace at a URL, <strong>DELETE</strong> remove.</li>
+<li>Headers: <code>Host</code> (required, supports virtual hosting), <code>Connection: close</code>, <code>User-Agent</code>, <code>Accept-Language</code>.</li>
+<li>Response: status line, headers, blank line, body. <code>Date</code> = when the response was made; <code>Last-Modified</code> = when the object changed; <code>Content-Length</code>, <code>Content-Type</code>, <code>Server</code>, caching headers.</li>
+<li>Status: <strong>200</strong> OK, <strong>301</strong> Moved Permanently (new URL in <code>Location</code>), <strong>400</strong> Bad Request, <strong>404</strong> Not Found, <strong>505</strong> Version Not Supported.</li>
+</ul>
+
+<h3>HTTP/2 and HTTP/3</h3>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>HTTP/1.1</th><th>HTTP/2</th><th>HTTP/3</th></tr></thead>
+<tbody>
+<tr><td>Transport</td><td>TCP</td><td>TCP (usually with TLS)</td><td>QUIC over UDP, TLS 1.3 built in</td></tr>
+<tr><td>Ordering</td><td>Responses in request order: head-of-line blocking</td><td>Objects split into frames and interleaved; priorities</td><td>Independent streams</td></tr>
+<tr><td>A lost packet</td><td>Delays everything behind it</td><td>Stalls all streams (TCP is in order)</td><td>Blocks only the affected stream</td></tr>
+</tbody></table></div>
+<ul>
+<li>HTTP/2 priority changes which ready frames go first, but cannot skip missing TCP bytes.</li>
+<li>QUIC is <strong>not</strong> a third transport protocol; it is an application-layer sublayer over UDP. Its loss and congestion control mirror TCP's, and congestion control is still connection-wide.</li>
+<li>QUIC sets up reliability, congestion control, authentication and crypto in <strong>one handshake</strong> (TCP + TLS needs two in a row). A returning client can use <strong>0-RTT</strong> resumption with a cached session ticket.</li>
+</ul>
+<div class="callout">Assignment 1: <code>Connection: keep-alive</code> shows the connection was meant to be persistent, and the client can still close it when done. HTTP/1.0 may omit <code>Host</code>; HTTP/1.1 may not. In cleartext HTTP/2 (h2c), client streams use odd IDs, and interleaved DATA frames of two streams show multiplexing. With HTTPS, an observer sees addresses and ports but not the HTTP messages.</div>
+</section>
+
+<section id="dns">
+<h2>4. Application layer: DNS and email</h2>
+<p class="source">DNS and Email lecture, textbook Ch. 2.3–2.4</p>
+<p class="lead">DNS is a core Internet service built at the application layer: a distributed, hierarchical, cached database. Email pushes messages between always-on servers with SMTP.</p>
+
+<h3>DNS services and structure</h3>
+<ul>
+<li>Translates hostnames ↔ IP addresses over <strong>UDP port 53</strong>. Also host aliasing (canonical names), mail server aliasing (MX), and load distribution (several IPs per name, rotated).</li>
+<li>Not centralized, because that would be a single point of failure, could not handle the traffic (Comcast alone: 600 billion queries a day), would add latency, and would be hard to maintain.</li>
+<li><strong>Root</strong> servers (13 logical, about 2,000 instances) return TLD server addresses. <strong>TLD</strong> servers (.com, .edu, .ca …) return authoritative servers. <strong>Authoritative</strong> servers hold each domain's records.</li>
+<li>The <strong>local DNS server</strong> is not part of the hierarchy but is central: the host's proxy, which resolves and caches on its behalf.</li>
+</ul>
+
+<h3>Resolution</h3>
+<ul>
+<li><strong>Iterative</strong>: the contacted server replies "I don't know, ask this server"; the local server contacts root, then TLD, then authoritative. 8 messages (4 queries + 4 replies) with nothing cached.</li>
+<li><strong>Recursive</strong>: each contacted server resolves the rest itself, putting the burden on servers high in the hierarchy.</li>
+<li><strong>Caching</strong>: servers store mappings until the TTL expires (often about 2 days) and answer later queries directly (non-authoritative). Local servers cache TLD addresses, so the root is rarely asked.</li>
+</ul>
+<div class="demo" data-demo="dns"></div>
+
+<h3>Records and messages</h3>
+<p>A resource record is <strong>(Name, Value, Type, TTL)</strong>.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Type</th><th>Name → Value</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>hostname → IP address</td><td>(web.example.com, 192.0.2.10, A, 3600)</td></tr>
+<tr><td>NS</td><td>domain → its authoritative DNS server</td><td>(example.com, ns1.example.com, NS, 86400)</td></tr>
+<tr><td>CNAME</td><td>alias → canonical hostname</td><td>(www.example.com, web.example.com, CNAME, 3600)</td></tr>
+<tr><td>MX</td><td>domain → mail server's canonical name</td><td>(example.com, mail.example.com, MX, 3600)</td></tr>
+</tbody></table></div>
+<ul>
+<li>Queries and replies share one format: a header with a 16-bit <strong>identification</strong> (the reply uses the same number), flags (query/reply, recursion desired, recursion available, authoritative) and counts, then question, answer, authority and additional sections.</li>
+<li>The additional section carries helpful extras, such as a mail server's IP in an MX reply. Try <code>nslookup www.google.com</code>: <code>#53</code> is the DNS port, and a cached reply is "non-authoritative".</li>
+</ul>
+<div class="callout">Assignment 1: the query and response share a transaction ID and swap ports (client port ↔ 53). RD is set by the client; RA says the resolver can recurse. NXDOMAIN means the name does not exist, and the SOA in the authority section supports negative caching.</div>
+
+<h3>Email</h3>
+<ul>
+<li>Three components: <strong>user agents</strong> (Outlook, phone mail), <strong>mail servers</strong> (mailboxes and an outgoing queue), and <strong>SMTP</strong>.</li>
+<li>SMTP uses TCP port 25 between servers. The sending server is the SMTP <em>client</em> for that connection because it initiates it. Three phases: handshaking, transfer, closure. ASCII commands with status-code replies, like HTTP.</li>
+<li>Mailboxes live on an always-on shared server because a phone or PC is often offline; the sender's server can retry if the receiver is down.</li>
+<li>Alice's agent → her server: SMTP or HTTP (webmail). Server → server: SMTP (a <strong>push</strong> protocol). Bob retrieves with <strong>HTTP</strong> (webmail apps) or <strong>IMAP</strong> (desktop clients), never with SMTP.</li>
+</ul>
+<pre><code>S: 220 hamburger.edu
+C: HELO crepes.fr
+S: 250 Hello crepes.fr, pleased to meet you
+C: MAIL FROM: &lt;alice@crepes.fr&gt;
+S: 250 alice@crepes.fr... Sender ok
+C: RCPT TO: &lt;bob@hamburger.edu&gt;
+S: 250 bob@hamburger.edu ... Recipient ok
+C: DATA
+S: 354 Enter mail, end with "." on a line by itself
+C: Do you like ketchup?
+C: .
+S: 250 Message accepted for delivery
+C: QUIT
+S: 221 hamburger.edu closing connection</code></pre>
+<p><code>MAIL FROM</code> and <code>RCPT TO</code> are envelope commands. The message itself has header lines (<code>From:</code>, <code>To:</code>, <code>Subject:</code>), a blank line and an ASCII body.</p>
+</section>
+
+<section id="sockets">
+<h2>5. Socket programming</h2>
+<p class="source">Socket Programming lecture, textbook Ch. 2.7, Assignment 2</p>
+<p class="lead">An application is a client program and a server program that read and write sockets. The developer writes both, picks TCP or UDP, and picks a port.</p>
+
+<h3>Design choices</h3>
+<ul>
+<li><strong>Open</strong> apps follow a public spec (RFC), so independent implementations interoperate (Chrome ⟷ Apache). <strong>Proprietary</strong> apps use a private protocol; one team controls both ends.</li>
+<li>Implementing an RFC protocol: use its well-known port. Proprietary: <strong>avoid</strong> well-known ports.</li>
+<li>The developer controls the application side of the socket; the OS controls transport (the handshake, retransmission, routing are not the app's job).</li>
+</ul>
+
+<h3>UDP sockets</h3>
+<ul>
+<li>No connection: every datagram carries the destination IP and port; the OS supplies the source. The receiver learns the sender's address from the datagram. Datagrams can be lost, duplicated or reordered.</li>
+<li>The server must be running (bound) before the client's datagram arrives.</li>
+</ul>
+<pre><code>clientSocket = socket(AF_INET, SOCK_DGRAM)
+clientSocket.sendto(message.encode(), (serverName, serverPort))
+modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
+
+serverSocket = socket(AF_INET, SOCK_DGRAM)
+serverSocket.bind(('', serverPort))
+message, clientAddress = serverSocket.recvfrom(2048)
+serverSocket.sendto(message.decode().upper().encode(), clientAddress)</code></pre>
+
+<h3>TCP sockets</h3>
+<ul>
+<li>The OS does a three-way handshake first. After that, each side writes bytes without naming the destination; TCP gives a reliable, ordered, bidirectional byte stream, like a pipe.</li>
+<li>The server must be listening before the client connects. <code>accept()</code> returns a new <strong>connection socket</strong>, separate from the welcoming socket, so n clients need n + 1 sockets.</li>
+</ul>
+<pre><code>clientSocket = socket(AF_INET, SOCK_STREAM)
+clientSocket.connect((serverName, serverPort))
+clientSocket.send(sentence.encode())
+modifiedSentence = clientSocket.recv(1024)
+
+serverSocket = socket(AF_INET, SOCK_STREAM)
+serverSocket.bind(('', serverPort))
+serverSocket.listen(1)
+while True:
+    connectionSocket, addr = serverSocket.accept()
+    sentence = connectionSocket.recv(1024).decode()
+    connectionSocket.send(sentence.upper().encode())
+    connectionSocket.close()</code></pre>
+
+<h3>Timeouts</h3>
+<ul>
+<li>Programs often wait for one of several events: a reply, or a timer. With several sockets, use <code>select()</code> or threads.</li>
+<li><code>s.settimeout(t)</code> applies to <strong>all future operations</strong> on that socket; a later call replaces the value. If no data arrives in time, <code>recv()</code> is interrupted and a <code>timeout</code> exception is raised.</li>
+<li>Lab sensor example: <code>settimeout(15)</code> on each accepted connection; an alert calls <code>notify_technician</code> and replies "technician notified"; a timeout increments a counter, and the loop stops after four timeouts.</li>
+</ul>
+<div class="callout">Assignment 2: the server replies to the address <code>recvfrom()</code> returns; the client lets the OS pick its port. Probes 5 and 10 get no reply on purpose, so their TIMEOUTs are not proof of network loss. The one-second deadline is measured from just before <code>sendto()</code> and is not restarted by mismatched PONGs. A clean capture has 18 UDP datagrams and no TCP handshake.</div>
+</section>
+
+<section id="transport">
+<h2>6. Transport layer and multiplexing</h2>
+<p class="source">Transport Layer lecture, textbook Ch. 3.1–3.2</p>
+<p class="lead">The network layer delivers to hosts; the transport layer extends that to processes, using port numbers to multiplex and demultiplex.</p>
+
+<h3>Role</h3>
+<ul>
+<li>Logical communication between <strong>processes</strong> (network layer: between <strong>hosts</strong>). Analogy: kids = processes, houses = hosts, Ann and Bill = transport, postal service = network layer.</li>
+<li>Runs only in end systems. Routers act on network-layer fields and never inspect transport headers.</li>
+<li>Sender: split messages if needed, add a transport header to make a <strong>segment</strong>, pass it to IP. Receiver: check the header, extract the message, deliver it to the right socket.</li>
+<li>Limited by the network: it cannot guarantee delay or bandwidth IP does not provide. But it can add reliability and security on top of an unreliable network.</li>
+<li>IP is best effort: no guarantee of delivery, order or integrity. TCP and UDP both add process-to-process delivery and error checking; TCP adds reliability, flow control and congestion control (regulated traffic); UDP traffic is unregulated.</li>
+<li>Terminology: call both TCP and UDP packets <strong>segments</strong>; keep <strong>datagram</strong> for the network layer.</li>
+</ul>
+
+<h3>Ports and sockets</h3>
+<ul>
+<li>Ports are 0–65,535; well-known ports 0–1023 (HTTP 80, FTP 21). Every segment carries source and destination ports.</li>
+<li>An unbound UDP socket gets a temporary port from the OS on its first send. Servers bind ports their clients know (DNS on UDP 53).</li>
+<li>The source port is the return address: the reply swaps the ports.</li>
+</ul>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>UDP</th><th>TCP</th></tr></thead>
+<tbody>
+<tr><td>Socket identified by</td><td>(destination IP, destination port)</td><td>(source IP, source port, destination IP, destination port)</td></tr>
+<tr><td>Segments from different sources to one port</td><td>Same socket</td><td>Different sockets, one per connection</td></tr>
+</tbody></table></div>
+<div class="demo" data-demo="demux"></div>
+<ul>
+<li>All four values must match <strong>one</strong> connection; TCP cannot combine values from different connections.</li>
+<li>A client talking to two servers needs two connections and two connected sockets, and no listening socket.</li>
+<li>A server with one listening socket and two accepted connections has three sockets. One process can manage them all; a new process per connection is not required.</li>
+<li>Many connections can share server port 80 because their four-tuples differ.</li>
+<li>A client switching to TCP cannot talk to a UDP-only server even though IP datagrams still reach the host.</li>
+</ul>
+</section>
+
+<section id="udp">
+<h2>7. UDP</h2>
+<p class="source">UDP lecture, textbook Ch. 3.3</p>
+<p class="lead">UDP is a thin layer over IP: end-to-end, connectionless and message-oriented, with an optional-looking but important checksum.</p>
+
+<h3>Characteristics</h3>
+<ul>
+<li><strong>End-to-end</strong>: tells applications on a host apart. <strong>Best effort</strong>, like IP. Any interaction pattern: one-to-many, many-to-one, one-to-one. Independent of OS identifiers.</li>
+<li><strong>Connectionless</strong>: no setup, no connection state, no control messages; send at any time with any gap between messages. Very low overhead.</li>
+<li><strong>Message-oriented</strong>: each send becomes one datagram; UDP never splits or combines messages, so boundaries are kept, but each message must fit in one IP datagram.</li>
+<li>Choosing UDP only because it is simpler is not enough: its service must meet the app's needs, or the app must add what is missing.</li>
+</ul>
+
+<h3>Message size</h3>
+<ul>
+<li>Too large for UDP/IP: the send <strong>fails</strong> and the app must split the message.</li>
+<li>Fits UDP but exceeds the MTU: IPv4 may <strong>fragment</strong> it; the destination's IP reassembles it before UDP, so the app still gets one message.</li>
+<li>An app that splits a message into three sends three datagrams; the receiving app must rejoin them and handle loss or reordering.</li>
+<li>Tiny messages have high header overhead; huge ones fragment. Best: large messages that fit the path MTU.</li>
+</ul>
+
+<h3>Header and checksum</h3>
+<pre><code>| source port # | dest port # |
+|    length     |  checksum   |
+|   application data ...      |</code></pre>
+<ul>
+<li>Length is in bytes and includes the header. The destination <em>port</em> is in the UDP header; the destination <em>IP</em> is in the IP header (the OS passes it to IP).</li>
+<li><strong>Sender</strong>: add the 16-bit words with one's complement arithmetic (wrap any carry back in), then complement the sum.</li>
+<li><strong>Receiver</strong>: add every word including the checksum. All 1s means no error detected; otherwise the datagram is <strong>silently discarded</strong>.</li>
+<li>Why it is needed: not every link checks errors, and errors can happen in router memory. It only detects errors (weakly): opposite bit flips in the same column cancel.</li>
+</ul>
+<div class="demo" data-demo="checksum"></div>
+</section>
+
+<section id="rdt">
+<h2>8. Reliable data transfer</h2>
+<p class="source">Reliable Data Transfer lecture, textbook Ch. 3.4</p>
+<p class="lead">Build reliability over an unreliable channel step by step: checksums, feedback, sequence numbers, timers, then pipelining.</p>
+
+<h3>The problem</h3>
+<ul>
+<li>The service promises the upper layer no corruption, no loss and in-order delivery. That does not mean the network is reliable: a capture can show corrupted packets and retransmissions while the app still gets each message once, in order.</li>
+<li>The design depends on the channel's errors (loss, corruption, reordering). Sender and receiver know each other's state only through feedback. Silence after sending could mean the data was lost, the reply was lost, or either is delayed.</li>
+<li>Interfaces: <code>rdt_send()</code> from above, <code>udt_send()</code> onto the channel, <code>rdt_rcv()</code> on arrival, <code>deliver_data()</code> up to the app. Sender and receiver are described as finite-state machines.</li>
+</ul>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Protocol</th><th>Bit errors</th><th>Loss</th><th>Corrupted ACK/NAK</th><th>Out of order</th><th>Type</th></tr></thead>
+<tbody>
+<tr><td>rdt1.0</td><td>Perfect channel</td><td>✗</td><td>No ACKs</td><td>✗</td><td>Simple transfer</td></tr>
+<tr><td>rdt2.0</td><td>✓ checksum, ACK/NAK</td><td>✗</td><td>✗</td><td>✗</td><td>Stop-and-wait</td></tr>
+<tr><td>rdt2.1</td><td>✓</td><td>✗</td><td>✓ 1-bit sequence numbers</td><td>✗</td><td>Stop-and-wait</td></tr>
+<tr><td>rdt2.2</td><td>✓</td><td>✗</td><td>✓ duplicate ACKs, no NAKs</td><td>✗</td><td>Stop-and-wait</td></tr>
+<tr><td>rdt3.0</td><td>✓</td><td>✓ timer</td><td>✓</td><td>✗</td><td>Stop-and-wait</td></tr>
+<tr><td>Go-Back-N</td><td>✓</td><td>✓</td><td>✓</td><td>✗ discards</td><td>Pipelined</td></tr>
+<tr><td>Selective Repeat</td><td>✓</td><td>✓</td><td>✓</td><td>✓ buffers</td><td>Pipelined</td></tr>
+</tbody></table></div>
+
+<h3>Step by step</h3>
+<ul>
+<li><strong>rdt1.0</strong>: sender sends, receiver delivers. A duplicated packet cannot be spotted by comparing data, since an app may really send the same data twice.</li>
+<li><strong>rdt2.0</strong>: ARQ with a checksum, ACK and NAK; resend on NAK. Flaw: a garbled ACK/NAK leaves the sender unsure, and resending can create a duplicate the receiver cannot recognize.</li>
+<li><strong>rdt2.1</strong>: a 1-bit sequence number (0/1). Retransmissions keep their number; relabelling one would make old data look new. Duplicate → ACK it again; corrupted → NAK.</li>
+<li><strong>rdt2.2</strong>: no NAKs; ACKs carry the sequence number of the last good packet. An ACK for the previous packet means "resend the current one".</li>
+<li><strong>rdt3.0</strong> (alternating-bit protocol): adds a countdown timer, started on every send. On timeout, retransmit, whatever the cause (lost data, lost ACK, delay). Premature timeouts create duplicates, which sequence numbers handle. Receiver as in rdt2.2.</li>
+</ul>
+
+<h3>Performance and pipelining</h3>
+<div class="formula">U_sender = (L/R) / (RTT + L/R) &nbsp;&nbsp; e.g. 0.008 ms / 30.008 ms ≈ 0.00027</div>
+<ul>
+<li>Stop-and-wait leaves the sender idle for almost the whole RTT. Pipelining N packets multiplies utilization by N.</li>
+<li>It needs a larger sequence number range, sender buffering, and sometimes receiver buffering.</li>
+<li><strong>Go-Back-N</strong>: window of N, k-bit sequence numbers (0 … 2<sup>k</sup> − 1), cumulative ACKs, one timer for the oldest unACKed packet; timeout(n) resends n and every later packet. The receiver ACKs the highest in-order packet and discards (or buffers) out-of-order ones.</li>
+<li><strong>Selective Repeat</strong>: individual ACKs and a logical timer per packet; resend only the lost packet. The receiver buffers out-of-order packets in [rcv_base, rcv_base + N − 1], delivers in order when the gap fills, and re-ACKs packets in [rcv_base − N, rcv_base − 1].</li>
+<li>SR window problem: with sequence numbers 0–3 and a window of 3, the receiver cannot tell a retransmitted old 0 from a new 0. The window must be at most half the sequence space (GBN: at most one less than the space).</li>
+</ul>
+<div class="demo" data-demo="window"></div>
+</section>
+
+<section id="tcp">
+<h2>9. TCP</h2>
+<p class="source">TCP lecture, textbook Ch. 3.5 (and a little of 3.7)</p>
+<p class="lead">TCP is reliable data transfer in practice: byte-numbered segments, cumulative ACKs, an adaptive timer and fast retransmit.</p>
+
+<h3>The connection</h3>
+<ul>
+<li>Connection-oriented with a three-way handshake; the connection is <strong>logical</strong> and exists only in the end systems (buffers, state variables, sockets). Routers see only IP datagrams.</li>
+<li><strong>Full duplex</strong>, <strong>point-to-point</strong>, no multicast. The initiator is the client (<code>connect()</code>).</li>
+<li>App data goes into the send buffer; TCP cuts it into segments of at most the <strong>MSS</strong>, based on the link MTU (Ethernet 1,500 bytes).</li>
+</ul>
+<pre><code>| source port # | dest port # |
+|        sequence number      |
+|     acknowledgement number  |
+| len | C E U A P R S F | rwnd|
+|   checksum   | urg pointer  |
+|   options / data ...        |</code></pre>
+
+<h3>Sequence and ACK numbers</h3>
+<ul>
+<li>A sequence number is the byte-stream number of the <strong>first byte</strong> in the segment. It counts bytes, not segments. The initial number is random, to avoid confusion with old segments.</li>
+<li>The ACK number is the <strong>next byte expected</strong> from the other side. ACKs are <strong>cumulative</strong>. How to handle out-of-order segments is up to the implementer (buffering them is usual).</li>
+<li>Telnet echo: A sends Seq 42, ACK 79, 'C'; B echoes Seq 79, ACK 43, 'C'; A replies Seq 43, ACK 80. Segments carry data and ACKs at the same time.</li>
+</ul>
+
+<h3>RTT estimation and timeout</h3>
+<div class="formula">EstimatedRTT = (1 − α)·EstimatedRTT + α·SampleRTT, α = 0.125<br>DevRTT = (1 − β)·DevRTT + β·|SampleRTT − EstimatedRTT|, β = 0.25<br>TimeoutInterval = EstimatedRTT + 4·DevRTT</div>
+<ul>
+<li>SampleRTT: one measurement at a time, never for retransmitted segments (their ACK is ambiguous). EWMA: old samples' weight decays exponentially.</li>
+<li>Too short a timeout causes unnecessary retransmissions; too long reacts slowly to loss. Initial timeout 1 s; after a timeout TCP <strong>doubles</strong> it, then recomputes from the formula when a new ACK updates the estimate.</li>
+</ul>
+
+<h3>Sender and receiver rules</h3>
+<ul>
+<li>Sender events: data from the app (send; start the timer if none running), timeout (resend the segment that timed out; restart the timer), ACK above SendBase (update SendBase; restart the timer if data is still unACKed).</li>
+</ul>
+<div class="table-wrap"><table>
+<thead><tr><th>Event at receiver</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>In-order segment, everything before already ACKed</td><td>Delayed ACK: wait up to 500 ms for the next segment</td></tr>
+<tr><td>In-order segment, one ACK pending</td><td>Immediately send one cumulative ACK for both</td></tr>
+<tr><td>Out-of-order segment, gap detected</td><td>Immediately send a duplicate ACK for the next expected byte</td></tr>
+<tr><td>Segment that fills the gap from its low end</td><td>Immediately ACK</td></tr>
+</tbody></table></div>
+
+<h3>Retransmission scenarios</h3>
+<ul>
+<li><strong>Lost ACK</strong>: A times out and resends Seq 92; B discards the duplicate and ACKs 100 again.</li>
+<li><strong>Premature timeout</strong>: both ACKs delayed; A resends only Seq 92; the cumulative ACK 120 then covers both, so Seq 100 is not resent.</li>
+<li><strong>Cumulative ACK covers a lost one</strong>: ACK 100 lost, ACK 120 arrives before the timeout, so nothing is resent.</li>
+<li><strong>Fast retransmit</strong>: 3 duplicate ACKs (4 ACKs for the same data) mean a segment is likely lost; resend it before the timer expires.</li>
+</ul>
+<div class="callout">From the textbook (Ch. 3.5–3.7): flow control holds the sender to the receiver's read rate through <code>rwnd</code>. In congestion control, a timeout sets ssthresh to half of cwnd and cwnd back to 1 MSS; additive increase adds 1 MSS per RTT; two flows sharing a link of rate R should each get R/2.</div>
+</section>
+
+<section id="cheat">
+<h2>Cheat sheet</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Quantity</th><th>Formula or fact</th></tr></thead>
+<tbody>
+<tr><td>Transmission delay</td><td>L / R</td></tr>
+<tr><td>Propagation delay</td><td>d / s (independent of L)</td></tr>
+<tr><td>Store-and-forward, P packets over N links</td><td>(N + P − 1) · L / R</td></tr>
+<tr><td>Throughput in series</td><td>min of the link rates</td></tr>
+<tr><td>Bandwidth-delay product, bit width</td><td>R · d_prop, s / R</td></tr>
+<tr><td>Non-persistent HTTP, one object</td><td>2 RTT + transmission</td></tr>
+<tr><td>Uncached iterative DNS lookup</td><td>8 messages</td></tr>
+<tr><td>Stop-and-wait utilization</td><td>(L/R) / (RTT + L/R); N in flight → × N</td></tr>
+<tr><td>Window limits (space of size k)</td><td>GBN ≤ k − 1, SR ≤ k / 2</td></tr>
+<tr><td>TCP RTT estimate</td><td>0.875 · Est + 0.125 · Sample; timeout = Est + 4 · Dev</td></tr>
+<tr><td>Sockets on a TCP server with n clients</td><td>n + 1</td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Ports and protocols</th><th></th></tr></thead>
+<tbody>
+<tr><td>HTTP / HTTPS</td><td>TCP 80 / 443</td></tr>
+<tr><td>HTTP/3 (QUIC)</td><td>over UDP</td></tr>
+<tr><td>DNS</td><td>UDP 53</td></tr>
+<tr><td>SMTP</td><td>TCP 25, push between servers</td></tr>
+<tr><td>Mail retrieval</td><td>IMAP (desktop) or HTTP (webmail)</td></tr>
+<tr><td>Well-known range</td><td>0–1023</td></tr>
+</tbody></table></div>
+<h3>Traps the exam can test</h3>
+<ul>
+<li>Thinking routers read TCP or UDP headers, or keep TCP state.</li>
+<li>Mixing up Date and Last-Modified, or A and CNAME records.</li>
+<li>Treating QUIC as a third transport protocol.</li>
+<li>Believing UDP splits, merges, orders or retransmits messages.</li>
+<li>Combining four-tuple values from different TCP connections.</li>
+<li>Counting segments instead of bytes for TCP sequence numbers; forgetting that ACKs are cumulative.</li>
+<li>Relabelling a retransmission with a new sequence number.</li>
+<li>Calling a missing reply proof of loss: it could be delay, a lost ACK, or a deliberate omission (A2).</li>
+<li>On this site's select-all questions, one wrong pick scores the question 0, so leave out options you are unsure of.</li>
+</ul>
+</section>
+
+      </article>
+    </div>
+  </main>
+  <script src="assets/engine.js"></script>
+  <script src="assets/common.js"></script>
+  <script src="assets/demos.js"></script>
+  <script>
+    (function () {
+      const links = Array.from(document.querySelectorAll('.toc a'));
+      const sections = links.map(link => document.querySelector(link.getAttribute('href')));
+      if (!('IntersectionObserver' in window)) return;
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) links.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id));
+        });
+      }, { rootMargin: '-20% 0px -70% 0px' });
+      sections.forEach(section => { if (section) observer.observe(section); });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CIS*3210 Midterm Study</title>
+  <meta name="description" content="Reading notes, textbook exercises, flashcards, topic quizzes and a timed practice exam for the CIS*3210 Computer Networks midterm.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect y='1' width='16' height='2.5' rx='1' fill='%232546c9'/%3E%3Crect y='5' width='11' height='2.5' rx='1' fill='%230e8570'/%3E%3Crect y='9' width='14' height='2.5' rx='1' fill='%23a8378a'/%3E%3Crect y='13' width='8' height='2.5' rx='1' fill='%23b98200'/%3E%3C/svg%3E">
+</head>
+<body data-page="home">
+  <header id="site-header"></header>
+  <main>
+    <section class="hero">
+      <div>
+        <h1>The midterm is Saturday, October 24</h1>
+        <p class="when">50 multiple-choice questions in 60 minutes. Covers the nine lectures from Introduction to Networking through TCP, and textbook Chapters 1 to 3.</p>
+        <p class="countdown" id="countdown"></p>
+        <div class="btn-row">
+          <a class="btn" href="exam.html">Take the practice exam</a>
+          <a class="btn secondary" href="read.html">Start reading</a>
+        </div>
+      </div>
+      <figure class="encap" aria-label="A message gains a transport, network and link header on its way down the stack">
+        <div class="encap-row"><span class="encap-layer">application</span><div class="encap-unit"><span class="msg">M</span><span class="name">message</span></div></div>
+        <div class="encap-row"><span class="encap-layer">transport</span><div class="encap-unit"><span class="h-trans">Ht</span><span class="msg">M</span><span class="name">segment</span></div></div>
+        <div class="encap-row"><span class="encap-layer">network</span><div class="encap-unit"><span class="h-net">Hn</span><span class="h-trans">Ht</span><span class="msg">M</span><span class="name">datagram</span></div></div>
+        <div class="encap-row"><span class="encap-layer">link</span><div class="encap-unit"><span class="h-link">Hl</span><span class="h-net">Hn</span><span class="h-trans">Ht</span><span class="msg">M</span><span class="name">frame</span></div></div>
+        <figcaption class="encap-caption">Each layer wraps what it gets from above in its own header. The receiver removes them in reverse order.</figcaption>
+      </figure>
+    </section>
+
+    <div class="home-grid">
+      <section aria-labelledby="study-h">
+        <h2 id="study-h" style="margin-top:0">Study</h2>
+        <ul class="study-list">
+          <li><a href="read.html"><span class="name">Read</span><span class="desc">Notes for all nine lectures, with step-through demos and a cheat sheet.</span><span class="stat" id="stat-read">9 lectures</span></a></li>
+          <li><a href="review.html"><span class="name">Review</span><span class="desc">Textbook review questions and problems from Chapters 1 to 3, each with a worked solution to reveal.</span><span class="stat" id="stat-review"></span></a></li>
+          <li><a href="flashcards.html"><span class="name">Flashcards</span><span class="desc">Definitions, header fields, formulas and socket calls by lecture.</span><span class="stat" id="stat-cards"></span></a></li>
+          <li><a href="quiz.html"><span class="name">Topic quizzes</span><span class="desc">Five-option questions by lecture, with an explanation for every option after each answer.</span><span class="stat" id="stat-quiz"></span></a></li>
+          <li><a href="exam.html"><span class="name">Practice exam</span><span class="desc">50 questions in 60 minutes with partial credit on select-all questions, scored by topic.</span><span class="stat" id="stat-exam"></span></a></li>
+        </ul>
+      </section>
+
+      <aside aria-labelledby="facts-h">
+        <h2 id="facts-h" style="margin-top:0">About the exam</h2>
+        <dl class="facts">
+          <dt>Format</dt>
+          <dd>All multiple choice, 50 questions in 60 minutes, which is 72 seconds per question.</dd>
+          <dt>Question style</dt>
+          <dd>Mostly short scenarios like the in-class questions: a situation, a trace or a few lines of code, then five options.</dd>
+          <dt>How this site marks</dt>
+          <dd>Single-answer questions are all or nothing. Select-all questions have 2 to 4 correct options: each correct pick earns its share of the mark, but a single wrong pick scores the question 0.</dd>
+          <dt>Lectures</dt>
+          <dd>Introduction to networking, Internetworking, HTTP, DNS and email, Socket programming, Transport layer, UDP, Reliable data transfer, TCP.</dd>
+          <dt>Textbook</dt>
+          <dd>Kurose and Ross, <em>Computer Networking: A Top-Down Approach</em>, 9th ed., Chapters 1 to 3.</dd>
+          <dt>Assignments</dt>
+          <dd>A1 (HTTP and DNS packet analysis) and A2 (UDP socket programming) appear in a few questions.</dd>
+        </dl>
+      </aside>
+    </div>
+  </main>
+
+  <script src="assets/engine.js"></script>
+  <script src="assets/common.js"></script>
+  <script src="data/flashcards.js"></script>
+  <script src="data/exercises.js"></script>
+  <script>
+    (function () {
+      const Study = window.Study;
+      const days = Study.daysUntilExam();
+      const countdown = document.getElementById('countdown');
+      if (days > 1) countdown.innerHTML = '<strong>' + days + '</strong> days to go.';
+      else if (days === 1) countdown.innerHTML = '<strong>Tomorrow.</strong> Skim the cheat sheet and sleep.';
+      else if (days === 0) countdown.innerHTML = '<strong>Today.</strong> Good luck.';
+      else countdown.textContent = 'The exam date has passed.';
+
+      const known = Study.store.get('cardsKnown', []);
+      document.getElementById('stat-cards').textContent = known.length + ' of ' + window.FLASHCARDS.length + ' known';
+
+      const reviewDone = Study.store.get('reviewDone', []);
+      document.getElementById('stat-review').textContent = reviewDone.length + ' of ' + window.EXERCISES.length + ' done';
+
+      const best = Study.store.get('quizBest', {});
+      const tried = Study.TOPIC_ORDER.filter(topic => best[topic]).length;
+      document.getElementById('stat-quiz').textContent = tried + ' of ' + Study.TOPIC_ORDER.length + ' topics tried';
+
+      const attempts = Study.store.get('examAttempts', []);
+      document.getElementById('stat-exam').textContent = attempts.length
+        ? 'Best ' + Math.max.apply(null, attempts.map(entry => Math.round(100 * entry.score / entry.total))) + '%'
+        : 'Not taken yet';
+    })();
+  </script>
+</body>
+</html>

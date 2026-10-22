@@ -1,0 +1,89 @@
+Q1: Why might a server close an idle persistent HTTP connection? (MCQ)
+  A. To reset HTTP statelessness after the preceding response.
+  B. To force DNS to verify the server address before every request.
+  C. To reclaim connection resources when likely reuse no longer justifies their cost.
+  D. To ensure the next request uses the latest copy of the requested file.
+
+Q2: A browser downloads objects one at a time using non-persistent HTTP. Why can many small objects take longer to download than one large object of the same total size? (Select all that apply)
+  A. The browser must repeat the DNS lookup for each object.
+  B. The total object transmission time increases, even at the same transmission rate.
+  C. Each object requires a new TCP connection, adding a connection-setup RTT.
+  D. Each object requires an HTTP request, adding another RTT before the response begins.
+
+Q3: Five HTTP/1.1 requests are pipelined. The first response is slow. Which limitations remain? (Select all that apply)
+  A. Ready later responses can wait behind the first response.
+  B. Each queued request needs a new TCP handshake before its response.
+  C. The client must retransmit every later request when the first response is delayed.
+  D. Responses must be sent in the order of their requests.
+
+Q5: At fixed RTT, why does increasing transmission rate usually help a 5 MB object more than a 1 KB object? (Select all that apply)
+  A. Payload transmission time grows with object size.
+  B. The fixed round-trip portion limits gains for very small objects.
+  C. Increasing rate reduces the size-dependent transmission term.
+  D. The larger object experiences a shorter physical propagation distance.
+
+--- Set 2 ---
+
+Q1: A new proprietary service needs a server port. Which choice follows the design guidance? (MCQ)
+  A. Use an available port outside the well-known ports.
+  B. Use the client's automatically selected port.
+  C. Choose the service port only after receiving the first request.
+  D. Use the same well-known port as any TCP service.
+
+Q2: Which responsibilities belong mainly to the application developer? (Select all that apply)
+  A. Implement TCP's three-way handshake inside the client.
+  B. Choose the transport service for the application.
+  C. Implement the client and server behavior.
+  D. Choose the network route for every server reply.
+
+Q3: Which differences between TCP and UDP are correct? (Select all that apply)
+  A. UDP senders address each datagram.
+  B. TCP establishes a connection before exchanging application data.
+  C. TCP requires a destination tuple on every connected write.
+  D. TCP provides an ordered byte stream.
+
+Q4: Two UDP services run on one host. What lets a datagram target the intended service? (MCQ)
+  A. The sender's source port without a destination port.
+  B. The destination port together with the host's IP address.
+  C. The source IP address and source port alone.
+  D. The source port used by the client's receiving socket.
+
+Q5: A UDP client sends to the correct server IP but an unrelated port. What has it selected incorrectly? (MCQ)
+  A. The receiving host, rather than its service.
+  B. The source host's IP address.
+  C. The encoding of the message.
+  D. The destination socket endpoint.
+  E. The server's source endpoint for replies.
+
+--- Set 3 ---
+
+Q1: A sender sends five identical copies of a message, then declares success. The channel may corrupt data. The receiver detects every corrupted copy but cannot send feedback. Which statement is correct? (MCQ)
+  A. The sender cannot confirm that any uncorrupted copy arrived.
+  B. Successful receipt is certain; only the arrival order is unknown.
+  C. Detecting corruption removes the need for feedback.
+  D. Reliable delivery requires exactly one transmission per message.
+
+Q2: A receiver accepts an uncorrupted packet, delivers its data, and sends an ACK. The sender detects corruption in the returning feedback and has no other information. Which statements are justified? (Select all that apply)
+  A. The receiver must undo its application delivery until the sender receives usable feedback.
+  B. The receiver's application can already have the data while the sender still lacks usable confirmation.
+  C. A correct recovery design must consider the possibility that the data was already delivered.
+  D. Retransmission may be needed to obtain usable confirmation; the receiver must recognize the duplicate and avoid delivering its data again.
+
+Q3: A receiver delivers a packet's data and sends an ACK. It then assumes that the sender knows delivery succeeded. However, the ACK may be lost or corrupted. Which statements are correct? (Select all that apply)
+  A. Sending an ACK does not prove that the sender received it without corruption.
+  B. A corrupted ACK confirms delivery just as reliably as an uncorrupted ACK.
+  C. The sender may still be waiting for confirmation after the receiver has delivered the data.
+  D. Completing the ACK send operation proves that the ACK reached the sender.
+
+Q4: An application submits one message using rdt_send. The sender transmits it three times using udt_send. The receiver gets two uncorrupted copies and one corrupted copy. Which receiver action provides the intended reliable service? (MCQ)
+  A. Deliver the first uncorrupted copy and treat the second as a new message.
+  B. Deliver one uncorrupted copy and discard the duplicate and corrupted copies.
+  C. Deliver both uncorrupted copies because each arrival represents a separate message.
+  D. Deliver all three copies and let the application handle corruption and duplicates.
+
+Q5: An application sends A, then B. Both packets arrive without corruption, but B arrives first. Which receiver action preserves the original delivery order without requiring retransmission? (MCQ)
+  A. Deliver A when it arrives, but require a new application submission before delivering the retained B.
+  B. Retain B, then deliver A followed by B when A arrives.
+  C. Deliver B immediately, then deliver A and B together when A arrives.
+  D. Reject B permanently, because receiving A later cannot restore the original transmission order.
+

@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Practice exam — CIS*3210 Midterm Study</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect y='1' width='16' height='2.5' rx='1' fill='%232546c9'/%3E%3Crect y='5' width='11' height='2.5' rx='1' fill='%230e8570'/%3E%3Crect y='9' width='14' height='2.5' rx='1' fill='%23a8378a'/%3E%3Crect y='13' width='8' height='2.5' rx='1' fill='%23b98200'/%3E%3C/svg%3E">
+</head>
+<body data-page="exam">
+  <header id="site-header"></header>
+  <main>
+    <div id="start" class="start-panel">
+      <div class="page-head">
+        <h1>Practice exam</h1>
+        <p>50 multiple-choice questions in 60 minutes. Each question has five options. Most are scenario questions in the style of the in-class questions, and some are <strong>select all that apply</strong>.</p>
+      </div>
+      <h2 style="margin-top:0">Choose an exam</h2>
+      <div class="chip-row" role="radiogroup" aria-label="Exam version" id="versions">
+        <button class="chip" type="button" role="radio" data-v="A" aria-pressed="true" aria-checked="true">Exam A: 50 new questions</button>
+        <button class="chip" type="button" role="radio" data-v="B" aria-pressed="false" aria-checked="false">Exam B: 50 drawn from the quiz bank</button>
+        <button class="chip" type="button" role="radio" data-v="C" aria-pressed="false" aria-checked="false">Exam C: textbook focus</button>
+      </div>
+      <p class="muted" id="version-note"></p>
+      <h2>Rules</h2>
+      <ul class="rules">
+        <li>The timer runs for 60 minutes and submits automatically at zero. That's 72 seconds per question.</li>
+        <li>Single-answer questions: full mark only for the one correct option.</li>
+        <li>Select-all questions have 2 to 4 correct options. Each correct pick earns its share of the mark, but one wrong pick scores the whole question 0. Blank scores 0.</li>
+        <li>Questions and options are shuffled for every attempt. Your order is saved, so a refresh keeps your place.</li>
+        <li>Answer in any order. Flag questions to come back to; the panel counts answered, unanswered and flagged questions.</li>
+      </ul>
+      <p><label class="inline"><input type="checkbox" id="untimed"> Practice without the timer</label></p>
+      <div class="btn-row" style="margin-top:18px">
+        <button class="btn" type="button" id="begin">Start the exam</button>
+        <button class="btn secondary" type="button" id="resume" hidden>Resume exam in progress</button>
+      </div>
+      <div id="history"></div>
+    </div>
+
+    <div id="exam" hidden>
+      <div class="exam-layout">
+        <div id="questions"></div>
+        <aside class="exam-side" id="side" aria-label="Exam progress">
+          <div class="timer" id="timer" role="timer" aria-live="off">60:00</div>
+          <div class="pace" id="pace"></div>
+          <div class="btn-row" style="margin-bottom:8px">
+            <button class="btn" type="button" id="submit">Submit exam</button>
+            <button class="btn quiet grid-toggle" type="button" id="toggle-grid" aria-expanded="false">Questions</button>
+          </div>
+          <div class="legend-counts" id="counts"></div>
+          <div class="qgrid" id="grid"></div>
+          <div class="legend">
+            <span><span class="kbd" style="background:var(--ink);color:var(--paper)">12</span> answered</span>
+            <span><span class="kbd">12</span> not answered; a gold dot means flagged</span>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="results" hidden>
+      <div class="exam-layout">
+        <div>
+          <h1 id="res-title">Exam results</h1>
+          <p class="score-big" id="res-score"></p>
+          <p class="muted" id="res-sub"></p>
+          <h2>By topic</h2>
+          <div class="table-wrap"><table class="breakdown" id="by-topic"></table></div>
+          <h2>By question source</h2>
+          <div class="table-wrap"><table class="breakdown" id="by-source"></table></div>
+          <h2>By question format</h2>
+          <div class="table-wrap"><table class="breakdown" id="by-format"></table></div>
+          <h2>Review</h2>
+          <div class="chip-row" id="review-filter" role="group" aria-label="Show">
+            <button class="chip" type="button" data-f="missed" aria-pressed="true">Missed</button>
+            <button class="chip" type="button" data-f="flagged" aria-pressed="false">Flagged</button>
+            <button class="chip" type="button" data-f="all" aria-pressed="false">All questions</button>
+          </div>
+          <div id="review"></div>
+          <div class="btn-row" style="margin-top:20px">
+            <button class="btn" type="button" id="new-exam">Take another exam</button>
+            <a class="btn secondary" href="quiz.html">Practice weak topics</a>
+          </div>
+        </div>
+        <aside class="exam-side">
+          <div class="qgrid" id="res-grid" style="display:grid"></div>
+          <div class="legend"><span>Green = full mark, gold = partial credit, red = 0. Click a number to jump to it.</span></div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/engine.js"></script>
+  <script src="assets/common.js"></script>
+  <script src="data/questions/intro.js"></script>
+  <script src="data/questions/internet.js"></script>
+  <script src="data/questions/http.js"></script>
+  <script src="data/questions/dns.js"></script>
+  <script src="data/questions/sockets.js"></script>
+  <script src="data/questions/transport.js"></script>
+  <script src="data/questions/udp.js"></script>
+  <script src="data/questions/rdt.js"></script>
+  <script src="data/questions/tcp.js"></script>
+  <script>
+  (function () {
+    const Study = window.Study;
+    const Engine = window.QuizEngine;
+    const byId = id => document.getElementById(id);
+    const DURATION = Study.EXAM_MINUTES * 60 * 1000;
+    const SECONDS_PER_QUESTION = DURATION / 1000 / Study.EXAM_SIZE;
+    const QUESTIONS_BY_ID = {};
+    Study.allQuestions().forEach(question => { QUESTIONS_BY_ID[question.id] = question; });
+    const QUIZ_POOL = Study.quizPool();
+    const EXAM_POOL = Study.examPool();
+    const TEXTBOOK_IN_BANK = QUIZ_POOL.filter(question => question.source === 'textbook').length;
+    const TEXTBOOK_CAP = Math.min(35, TEXTBOOK_IN_BANK);
+
+    let version = 'A';
+    let attempt = null;
+    let ticker = null;
+
+    const NOTES = {
+      A: 'Exam A uses ' + EXAM_POOL.length + ' questions that never appear in the topic quizzes. Take it first, as your real benchmark. The question order and options are reshuffled each attempt.',
+      B: 'Exam B draws a fresh random ' + Study.EXAM_SIZE + ' from the ' + QUIZ_POOL.length + '-question quiz bank each time, spread across the topics in proportion to the bank.',
+      C: 'Exam C has ' + TEXTBOOK_CAP + ' textbook questions (drawn from the ' + TEXTBOOK_IN_BANK + ' in the bank) plus ' + (Study.EXAM_SIZE - TEXTBOOK_CAP) + ' in-class, conceptual and assignment questions from the other topics.'
+    };
+
+    function setVersion(next) {
+      version = next;
+      byId('versions').querySelectorAll('button').forEach(button => {
+        const isOn = button.dataset.v === next;
+        button.setAttribute('aria-pressed', String(isOn));
+        button.setAttribute('aria-checked', String(isOn));
+      });
+      byId('version-note').textContent = NOTES[next];
+    }
+    byId('versions').querySelectorAll('button').forEach(button => button.addEventListener('click', () => setVersion(button.dataset.v)));
+
+    function examQuestions(which) {
+      if (which === 'A') return Engine.buildExamA(EXAM_POOL);
+      if (which === 'C') return Engine.buildExamC(QUIZ_POOL, Study.EXAM_SIZE, TEXTBOOK_CAP, Study.TOPIC_ORDER);
+      return Engine.buildExamB(QUIZ_POOL, Study.EXAM_SIZE, Study.TOPIC_ORDER);
+    }
+
+    function begin() {
+      attempt = Engine.createAttempt(version, examQuestions(version), !byId('untimed').checked, Math.random, Date.now());
+      save();
+      openExam();
+    }
+
+    function save() { Engine.saveAttempt(Study.store, attempt); }
+
+    function fmtTime(millis) {
+      const seconds = Math.max(0, Math.round(millis / 1000));
+      return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+    }
+
+    function showHistory() {
+      const attempts = Study.store.get('examAttempts', []);
+      byId('resume').hidden = !Engine.loadAttempt(Study.store, QUESTIONS_BY_ID);
+      if (!attempts.length) { byId('history').innerHTML = ''; return; }
+      byId('history').innerHTML = '<h2>Past attempts</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Exam</th><th>Score</th><th>Time used</th></tr></thead><tbody>' +
+        attempts.slice().reverse().map(entry => '<tr><td>' + new Date(entry.when).toLocaleString() + '</td><td>' + entry.version + '</td><td>' + Engine.formatPoints(entry.score) + ' / ' + entry.total + ' (' + Math.round(100 * entry.score / entry.total) + '%)</td><td>' + (entry.timed ? fmtTime(entry.used) : 'Untimed') + '</td></tr>').join('') +
+        '</tbody></table></div>';
+    }
+
+    function answeredCount() {
+      return attempt.questionIds.filter(questionId => (attempt.answers[questionId] || []).length > 0).length;
+    }
+
+    function openExam() {
+      byId('start').hidden = true;
+      byId('results').hidden = true;
+      byId('exam').hidden = false;
+      const total = attempt.questionIds.length;
+      byId('questions').innerHTML = attempt.questionIds.map((questionId, index) => {
+        const question = QUESTIONS_BY_ID[questionId];
+        const order = attempt.optionOrders[questionId];
+        const isFlagged = Boolean(attempt.flags[questionId]);
+        return '<section class="exam-q" id="q-' + index + '" data-i="' + index + '">' +
+          '<div class="q-meta"><span>Question ' + (index + 1) + ' of ' + total + '</span><span>' + (question.multi ? 'Select all that apply' : 'Single answer') + '</span></div>' +
+          Study.stemHTML(question) +
+          '<div class="options' + (question.multi ? ' multi' : '') + '" role="' + (question.multi ? 'group' : 'radiogroup') + '" aria-label="Question ' + (index + 1) + ' choices">' +
+          Study.optionsHTML(question, order, 'exam-' + index, attempt.answers[questionId] || [], false) +
+          '</div><div class="q-actions"><button class="btn quiet flag-btn" type="button" data-i="' + index + '" aria-pressed="' + isFlagged + '">' + (isFlagged ? 'Flagged' : 'Flag for review') + '</button>' +
+          '<button class="btn quiet clear-btn" type="button" data-i="' + index + '">Clear answer</button></div></section>';
+      }).join('');
+
+      byId('questions').querySelectorAll('.exam-q').forEach(section => {
+        const index = Number(section.dataset.i);
+        const questionId = attempt.questionIds[index];
+        const question = QUESTIONS_BY_ID[questionId];
+        section.querySelectorAll('input').forEach(input => input.addEventListener('change', () => {
+          let picked = (attempt.answers[questionId] || []).slice();
+          if (!question.multi) picked = [input.value];
+          else if (input.checked && picked.indexOf(input.value) < 0) picked.push(input.value);
+          else if (!input.checked) picked = picked.filter(optionId => optionId !== input.value);
+          attempt.answers[questionId] = picked;
+          section.querySelectorAll('.option').forEach(label => label.classList.toggle('picked', picked.indexOf(label.dataset.option) >= 0));
+          save();
+          updateGrid();
+        }));
+      });
+      byId('questions').querySelectorAll('.flag-btn').forEach(button => button.addEventListener('click', () => {
+        const questionId = attempt.questionIds[Number(button.dataset.i)];
+        attempt.flags[questionId] = !attempt.flags[questionId];
+        button.setAttribute('aria-pressed', String(attempt.flags[questionId]));
+        button.textContent = attempt.flags[questionId] ? 'Flagged' : 'Flag for review';
+        save();
+        updateGrid();
+      }));
+      byId('questions').querySelectorAll('.clear-btn').forEach(button => button.addEventListener('click', () => {
+        const index = Number(button.dataset.i);
+        delete attempt.answers[attempt.questionIds[index]];
+        byId('q-' + index).querySelectorAll('.option').forEach(label => {
+          label.classList.remove('picked');
+          label.querySelector('input').checked = false;
+        });
+        save();
+        updateGrid();
+      }));
+
+      byId('grid').innerHTML = attempt.questionIds.map((questionId, index) => '<button type="button" data-i="' + index + '">' + (index + 1) + '</button>').join('');
+      byId('grid').querySelectorAll('button').forEach(button => button.addEventListener('click', () => jump(Number(button.dataset.i))));
+      updateGrid();
+
+      clearInterval(ticker);
+      if (attempt.timed) { ticker = setInterval(updateTimer, 1000); updateTimer(); }
+      else { byId('timer').textContent = 'Untimed'; }
+      window.scrollTo(0, 0);
+    }
+
+    function jump(index) {
+      const target = byId('q-' + index) || byId('rq-' + index);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      byId('side').classList.remove('open');
+      byId('toggle-grid').setAttribute('aria-expanded', 'false');
+    }
+
+    function updateGrid() {
+      const total = attempt.questionIds.length;
+      const answered = answeredCount();
+      const flagged = attempt.questionIds.filter(questionId => attempt.flags[questionId]).length;
+      byId('grid').querySelectorAll('button').forEach((button, index) => {
+        const questionId = attempt.questionIds[index];
+        const isAnswered = (attempt.answers[questionId] || []).length > 0;
+        button.classList.toggle('answered', isAnswered);
+        button.classList.toggle('flagged', Boolean(attempt.flags[questionId]));
+        button.setAttribute('aria-label', 'Question ' + (index + 1) + (isAnswered ? ', answered' : ', not answered') + (attempt.flags[questionId] ? ', flagged' : ''));
+      });
+      byId('counts').innerHTML = '<div><strong>' + answered + '</strong><span>answered</span></div><div><strong>' + (total - answered) + '</strong><span>unanswered</span></div><div><strong>' + flagged + '</strong><span>flagged</span></div>';
+      byId('submit').textContent = 'Submit exam (' + answered + '/' + total + ')';
+      if (!attempt.timed) byId('pace').textContent = answered + ' of ' + total + ' answered';
+    }
+
+    function updateTimer() {
+      const elapsed = Date.now() - attempt.startedAt;
+      const left = DURATION - elapsed;
+      byId('timer').textContent = fmtTime(left);
+      byId('timer').classList.toggle('low', left < 5 * 60 * 1000);
+      const target = Math.min(attempt.questionIds.length, Math.floor(elapsed / (SECONDS_PER_QUESTION * 1000)) + 1);
+      byId('pace').textContent = answeredCount() + ' of ' + attempt.questionIds.length + ' answered. On a ' + SECONDS_PER_QUESTION + '-second pace you\'d be at question ' + target + '.';
+      if (left <= 0) { clearInterval(ticker); submit(true); }
+    }
+
+    function submit(auto) {
+      const blank = attempt.questionIds.length - answeredCount();
+      if (!auto && blank > 0 && !window.confirm(blank + ' question' + (blank === 1 ? ' is' : 's are') + ' unanswered. Submit anyway?')) return;
+      clearInterval(ticker);
+      const outcome = Engine.scoreAttempt(attempt, QUESTIONS_BY_ID);
+      const used = Math.min(Date.now() - attempt.startedAt, DURATION);
+      const attempts = Study.store.get('examAttempts', []);
+      attempts.push({ when: Date.now(), version: attempt.version, score: outcome.score, total: outcome.outOf, used: used, timed: attempt.timed });
+      Study.store.set('examAttempts', attempts);
+      Study.store.remove('examInProgress');
+      showResults(outcome, used, auto);
+    }
+
+    let reviewFilter = 'missed';
+    let lastOutcome = null;
+
+    function breakdownTable(keys, keyOf, label) {
+      const rows = keys.map(key => {
+        const ids = attempt.questionIds.filter(questionId => keyOf(QUESTIONS_BY_ID[questionId]) === key);
+        if (!ids.length) return '';
+        const earned = ids.reduce((sum, questionId) => sum + lastOutcome.perQuestion[questionId], 0);
+        const pct = Math.round(100 * earned / ids.length);
+        return '<tr><td>' + Study.esc(label(key)) + '</td><td class="bar-cell"><div class="mini-bar"><span style="width:' + pct + '%"></span></div></td><td>' + Engine.formatPoints(earned) + ' / ' + ids.length + '</td></tr>';
+      }).join('');
+      return '<thead><tr><th>Area</th><th class="bar-cell">Score</th><th>Points</th></tr></thead><tbody>' + rows + '</tbody>';
+    }
+
+    function showResults(outcome, used, auto) {
+      lastOutcome = outcome;
+      byId('exam').hidden = true;
+      byId('results').hidden = false;
+      const pct = Math.round(100 * outcome.score / outcome.outOf);
+      byId('res-title').textContent = 'Exam ' + attempt.version + ' results';
+      byId('res-score').textContent = Engine.formatPoints(outcome.score) + ' / ' + outcome.outOf + ' (' + pct + '%)';
+      byId('res-sub').textContent = (auto ? 'Time ran out. ' : '') + (attempt.timed ? 'Time used: ' + fmtTime(used) + ' of ' + Study.EXAM_MINUTES + ':00.' : 'Untimed attempt.');
+      byId('by-topic').innerHTML = breakdownTable(Study.TOPIC_ORDER, question => question.topic, key => Study.TOPICS[key]);
+      byId('by-source').innerHTML = breakdownTable(Study.SOURCE_ORDER, question => question.source, key => Study.SOURCE_LABEL[key]);
+      byId('by-format').innerHTML = breakdownTable(['single', 'multi'], question => question.multi ? 'multi' : 'single', key => key === 'multi' ? 'Select all that apply' : 'Single answer');
+      byId('res-grid').innerHTML = attempt.questionIds.map((questionId, index) => {
+        const points = outcome.perQuestion[questionId];
+        const tone = points === 1 ? 'right' : (points > 0 ? 'partial' : 'miss');
+        return '<button type="button" data-i="' + index + '" class="' + tone + '">' + (index + 1) + '</button>';
+      }).join('');
+      byId('res-grid').querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
+        if (reviewFilter !== 'all') setFilter('all');
+        jump(Number(button.dataset.i));
+      }));
+      setFilter('missed');
+      window.scrollTo(0, 0);
+    }
+
+    function setFilter(filter) {
+      reviewFilter = filter;
+      byId('review-filter').querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.f === filter)));
+      renderReview();
+    }
+    byId('review-filter').querySelectorAll('button').forEach(button => button.addEventListener('click', () => setFilter(button.dataset.f)));
+
+    function renderReview() {
+      const items = attempt.questionIds.map((questionId, index) => ({ questionId: questionId, index: index })).filter(item => {
+        const points = lastOutcome.perQuestion[item.questionId];
+        if (reviewFilter === 'missed') return points < 1;
+        if (reviewFilter === 'flagged') return Boolean(attempt.flags[item.questionId]);
+        return true;
+      });
+      if (!items.length) {
+        byId('review').innerHTML = '<p>' + (reviewFilter === 'missed' ? 'You missed nothing.' : 'You didn\'t flag any questions.') + '</p>';
+        return;
+      }
+      byId('review').innerHTML = items.map(item => {
+        const question = QUESTIONS_BY_ID[item.questionId];
+        const order = attempt.optionOrders[item.questionId];
+        const picked = attempt.answers[item.questionId] || [];
+        return '<section class="exam-q" id="rq-' + item.index + '"><div class="q-meta"><span>Question ' + (item.index + 1) + '</span>' + Study.metaTags(question) +
+          (attempt.flags[item.questionId] ? '<span>Flagged</span>' : '') + '<span class="points">' + Engine.formatPoints(lastOutcome.perQuestion[item.questionId]) + ' / 1</span></div>' +
+          Study.stemHTML(question) + Study.verdictHTML(question, order, picked) +
+          '<div class="options' + (question.multi ? ' multi' : '') + '">' + Study.explainedOptionsHTML(question, order, picked) + '</div></section>';
+      }).join('');
+    }
+
+    byId('begin').addEventListener('click', () => {
+      if (Engine.loadAttempt(Study.store, QUESTIONS_BY_ID) && !window.confirm('Start a new exam? Your exam in progress will be discarded.')) return;
+      begin();
+    });
+    byId('resume').addEventListener('click', () => {
+      attempt = Engine.loadAttempt(Study.store, QUESTIONS_BY_ID);
+      if (!attempt) { Study.store.remove('examInProgress'); showHistory(); return; }
+      if (attempt.timed && Date.now() - attempt.startedAt >= DURATION) { openExam(); submit(true); return; }
+      openExam();
+    });
+    byId('submit').addEventListener('click', () => submit(false));
+    byId('toggle-grid').addEventListener('click', () => {
+      const isOpen = byId('side').classList.toggle('open');
+      byId('toggle-grid').setAttribute('aria-expanded', String(isOpen));
+    });
+    byId('new-exam').addEventListener('click', () => {
+      byId('results').hidden = true;
+      byId('start').hidden = false;
+      showHistory();
+      window.scrollTo(0, 0);
+    });
+
+    setVersion('A');
+    showHistory();
+    if (new URLSearchParams(window.location.search).get('version') === 'C') setVersion('C');
+  })();
+  </script>
+</body>
+</html>

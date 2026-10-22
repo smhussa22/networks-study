@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quizzes — CIS*3210 Midterm Study</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect y='1' width='16' height='2.5' rx='1' fill='%232546c9'/%3E%3Crect y='5' width='11' height='2.5' rx='1' fill='%230e8570'/%3E%3Crect y='9' width='14' height='2.5' rx='1' fill='%23a8378a'/%3E%3Crect y='13' width='8' height='2.5' rx='1' fill='%23b98200'/%3E%3C/svg%3E">
+</head>
+<body data-page="quiz">
+  <header id="site-header"></header>
+  <main>
+    <div id="picker">
+      <div class="page-head">
+        <h1>Topic quizzes</h1>
+        <p>Pick a lecture topic. After each answer you see whether you were right and why every option is right or wrong. Questions are drawn at random and the five choices are reshuffled every time.</p>
+      </div>
+      <div class="btn-row" style="margin-bottom:18px">
+        <label class="inline">Length
+          <select id="length">
+            <option value="5">5 questions</option>
+            <option value="10" selected>10 questions</option>
+            <option value="20">20 questions</option>
+            <option value="all">Every question in the topic</option>
+          </select>
+        </label>
+      </div>
+      <p class="muted" style="max-width:var(--measure)">Single-answer questions use round buttons. <strong>Select all that apply</strong> questions use square checkboxes and have 2 to 4 correct options: each correct pick earns partial credit, but one wrong pick scores the whole question 0.</p>
+      <ul class="topic-picker" id="topic-list"></ul>
+    </div>
+
+    <div id="runner" hidden>
+      <div class="qcard">
+        <div class="progress-line" aria-hidden="true"><span id="bar"></span></div>
+        <div class="q-meta"><span id="q-pos"></span><span id="q-tags"></span></div>
+        <div id="stem"></div>
+        <div class="options" id="options" role="group" aria-label="Answer choices"></div>
+        <div id="feedback"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="check" hidden disabled>Check answer</button>
+          <button class="btn" type="button" id="next" hidden>Next question</button>
+          <button class="btn quiet" type="button" id="quit">End quiz</button>
+        </div>
+        <p class="muted" style="margin-top:14px;font-size:0.9rem">Keys: <span class="kbd">A</span>–<span class="kbd">E</span> or <span class="kbd">1</span>–<span class="kbd">5</span> pick an option (letters follow the order shown), <span class="kbd">Enter</span> checks a multi-select answer or goes to the next question.</p>
+      </div>
+    </div>
+
+    <div id="results" hidden>
+      <div class="qcard">
+        <h1 id="r-title">Quiz complete</h1>
+        <p class="score-big" id="r-score"></p>
+        <p class="muted" id="r-sub"></p>
+        <div class="btn-row" style="margin:18px 0 30px">
+          <button class="btn" type="button" id="retry-missed">Retry the ones I missed</button>
+          <button class="btn secondary" type="button" id="again">New quiz on this topic</button>
+          <button class="btn quiet" type="button" id="back">All topics</button>
+        </div>
+        <div id="review"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/engine.js"></script>
+  <script src="assets/common.js"></script>
+  <script src="data/questions/intro.js"></script>
+  <script src="data/questions/internet.js"></script>
+  <script src="data/questions/http.js"></script>
+  <script src="data/questions/dns.js"></script>
+  <script src="data/questions/sockets.js"></script>
+  <script src="data/questions/transport.js"></script>
+  <script src="data/questions/udp.js"></script>
+  <script src="data/questions/rdt.js"></script>
+  <script src="data/questions/tcp.js"></script>
+  <script>
+  (function () {
+    const Study = window.Study;
+    const Engine = window.QuizEngine;
+    const bank = Study.quizPool();
+    const byId = id => document.getElementById(id);
+    const NUMBER_KEYS = ['1', '2', '3', '4', '5'];
+
+    let topic = null;
+    let questionList = [];
+    let position = 0;
+    let order = [];
+    let selected = [];
+    let answered = false;
+    let results = [];
+
+    function topicLabel(key) {
+      if (key === 'mixed') return 'Mixed: every topic';
+      if (key === 'textbook') return 'Textbook questions, all topics';
+      return Study.TOPICS[key];
+    }
+
+    function poolFor(key) {
+      if (key === 'mixed') return bank;
+      if (key === 'textbook') return bank.filter(question => question.source === 'textbook');
+      return bank.filter(question => question.topic === key);
+    }
+
+    function buildPicker() {
+      const best = Study.store.get('quizBest', {});
+      const keys = Study.TOPIC_ORDER.concat(['textbook', 'mixed']);
+      byId('topic-list').innerHTML = keys.map(key => {
+        const count = poolFor(key).length;
+        const record = best[key];
+        return '<li><button type="button" data-topic="' + key + '"><span class="t-name">' + Study.esc(topicLabel(key)) + '</span>' +
+          '<span class="t-count">' + count + ' questions</span>' +
+          '<span class="t-best">' + (record ? 'Best ' + record.pct + '%' : 'Not tried') + '</span></button></li>';
+      }).join('');
+      byId('topic-list').querySelectorAll('button').forEach(button => button.addEventListener('click', () => start(button.dataset.topic)));
+    }
+
+    function start(key, questions) {
+      topic = key;
+      if (questions) questionList = Engine.shuffleList(questions);
+      else {
+        const pool = poolFor(key);
+        const wanted = byId('length').value === 'all' ? pool.length : Number(byId('length').value);
+        questionList = Engine.drawQuestions(pool, wanted);
+      }
+      position = 0;
+      results = [];
+      byId('picker').hidden = true;
+      byId('results').hidden = true;
+      byId('runner').hidden = false;
+      show();
+      window.scrollTo(0, 0);
+    }
+
+    function show() {
+      const question = questionList[position];
+      order = Engine.shuffledOptionIds(question);
+      selected = [];
+      answered = false;
+      byId('bar').style.width = (100 * position / questionList.length) + '%';
+      byId('q-pos').textContent = 'Question ' + (position + 1) + ' of ' + questionList.length;
+      byId('q-tags').innerHTML = Study.metaTags(question);
+      byId('q-tags').style.display = 'contents';
+      byId('stem').innerHTML = Study.stemHTML(question);
+      byId('options').className = 'options' + (question.multi ? ' multi' : '');
+      byId('options').setAttribute('role', question.multi ? 'group' : 'radiogroup');
+      byId('options').innerHTML = Study.optionsHTML(question, order, 'quiz-' + question.id, [], false);
+      byId('options').querySelectorAll('input').forEach(input => input.addEventListener('change', () => onPick(input.value, input.checked)));
+      byId('feedback').innerHTML = '';
+      byId('next').hidden = true;
+      byId('check').hidden = !question.multi;
+      byId('check').disabled = true;
+    }
+
+    function refreshPicked() {
+      byId('options').querySelectorAll('.option').forEach(label => {
+        const isOn = selected.indexOf(label.dataset.option) >= 0;
+        label.classList.toggle('picked', isOn);
+        label.querySelector('input').checked = isOn;
+      });
+      byId('check').disabled = selected.length === 0;
+    }
+
+    function onPick(optionId, isChecked) {
+      if (answered) return;
+      const question = questionList[position];
+      if (!question.multi) {
+        selected = [optionId];
+        refreshPicked();
+        submitAnswer();
+        return;
+      }
+      if (isChecked && selected.indexOf(optionId) < 0) selected.push(optionId);
+      if (!isChecked) selected = selected.filter(id => id !== optionId);
+      refreshPicked();
+    }
+
+    function pickByPosition(slot) {
+      if (answered || slot >= order.length) return;
+      const optionId = order[slot];
+      const question = questionList[position];
+      const isOn = selected.indexOf(optionId) >= 0;
+      onPick(optionId, question.multi ? !isOn : true);
+    }
+
+    function submitAnswer() {
+      if (answered || selected.length === 0) return;
+      answered = true;
+      const question = questionList[position];
+      const points = Engine.gradeQuestion(question, selected);
+      results.push({ question: question, order: order.slice(), selected: selected.slice(), points: points });
+      byId('options').innerHTML = Study.explainedOptionsHTML(question, order, selected);
+      byId('feedback').innerHTML = Study.verdictHTML(question, order, selected);
+      byId('check').hidden = true;
+      byId('next').hidden = false;
+      byId('next').textContent = position === questionList.length - 1 ? 'See results' : 'Next question';
+      byId('next').focus();
+    }
+
+    function next() {
+      if (!answered) return;
+      if (position < questionList.length - 1) { ++position; show(); window.scrollTo(0, 0); }
+      else finish();
+    }
+
+    function finish() {
+      byId('runner').hidden = true;
+      byId('results').hidden = false;
+      const total = results.reduce((sum, result) => sum + result.points, 0);
+      const pct = Math.round(100 * total / results.length);
+      byId('r-score').textContent = Engine.formatPoints(total) + ' / ' + results.length;
+      byId('r-title').textContent = topicLabel(topic) + ' complete';
+      byId('r-sub').textContent = pct + '%' + (pct >= 80 ? '. Solid. Try the practice exam next.' : '. Reread this topic, then retry the ones you missed.');
+      const best = Study.store.get('quizBest', {});
+      if (!best[topic] || pct > best[topic].pct) {
+        best[topic] = { score: total, total: results.length, pct: pct };
+        Study.store.set('quizBest', best);
+      }
+      const missed = results.filter(result => result.points < 1);
+      byId('retry-missed').hidden = missed.length === 0;
+      byId('review').innerHTML = missed.length
+        ? '<h2>Review what you missed</h2>' + missed.map(result =>
+            '<div class="exam-q"><div class="q-meta">' + Study.metaTags(result.question) + '<span class="points">' + Engine.formatPoints(result.points) + ' / 1</span></div>' +
+            Study.stemHTML(result.question) +
+            Study.verdictHTML(result.question, result.order, result.selected) +
+            '<div class="options' + (result.question.multi ? ' multi' : '') + '">' + Study.explainedOptionsHTML(result.question, result.order, result.selected) + '</div></div>').join('')
+        : '<p>No misses. Nice work.</p>';
+      window.scrollTo(0, 0);
+    }
+
+    function back() {
+      byId('runner').hidden = true;
+      byId('results').hidden = true;
+      byId('picker').hidden = false;
+      buildPicker();
+      window.scrollTo(0, 0);
+    }
+
+    byId('check').addEventListener('click', submitAnswer);
+    byId('next').addEventListener('click', next);
+    byId('quit').addEventListener('click', () => { if (results.length) finish(); else back(); });
+    byId('back').addEventListener('click', back);
+    byId('again').addEventListener('click', () => start(topic));
+    byId('retry-missed').addEventListener('click', () => start(topic, results.filter(result => result.points < 1).map(result => result.question)));
+
+    document.addEventListener('keydown', event => {
+      if (byId('runner').hidden) return;
+      if (event.target.closest && event.target.closest('select')) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const letterSlot = Engine.LETTERS.indexOf(event.key.toUpperCase());
+      const slot = letterSlot >= 0 ? letterSlot : NUMBER_KEYS.indexOf(event.key);
+      if (slot >= 0 && !answered) { event.preventDefault(); pickByPosition(slot); return; }
+      if (event.key !== 'Enter') return;
+      if (!answered && selected.length) { event.preventDefault(); submitAnswer(); }
+      else if (answered && document.activeElement !== byId('next')) { event.preventDefault(); next(); }
+    });
+
+    buildPicker();
+    const params = new URLSearchParams(window.location.search);
+    const wanted = params.get('topic');
+    if (wanted && (wanted === 'mixed' || wanted === 'textbook' || Study.TOPICS[wanted])) {
+      if (params.get('all')) byId('length').value = 'all';
+      start(wanted);
+    }
+  })();
+  </script>
+</body>
+</html>

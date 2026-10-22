@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review — CIS*3210 Midterm Study</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect y='1' width='16' height='2.5' rx='1' fill='%232546c9'/%3E%3Crect y='5' width='11' height='2.5' rx='1' fill='%230e8570'/%3E%3Crect y='9' width='14' height='2.5' rx='1' fill='%23a8378a'/%3E%3Crect y='13' width='8' height='2.5' rx='1' fill='%23b98200'/%3E%3C/svg%3E">
+</head>
+<body data-page="review">
+  <header id="site-header"></header>
+  <main>
+    <div class="page-head">
+      <h1>Textbook exercises</h1>
+      <p>Review questions and problems from Kurose and Ross, Chapters 1 to 3, picked from the course's textbook question set. Work each one on paper first, then open its worked solution.</p>
+    </div>
+
+    <div class="review-bar">
+      <div><strong id="done-count">0 of 0</strong> <span class="muted">exercises done</span>
+        <div class="fc-progress" aria-hidden="true"><span id="done-bar"></span></div></div>
+      <div class="btn-row">
+        <a class="btn" id="quiz-link" href="quiz.html?topic=textbook&amp;all=1">Quiz me on the textbook questions</a>
+        <a class="btn secondary" href="exam.html?version=C">Exam C: textbook focus</a>
+      </div>
+    </div>
+    <p class="muted review-note">Questions that depend on figures, applets or live experiments are left out, as in the textbook question set. Two answers in that set are corrected here: Chapter 1 P8(d) and Chapter 3 R18.</p>
+
+    <div class="reading">
+      <nav class="toc" aria-label="Chapters">
+        <ol>
+          <li><a href="#ch1">Chapter 1: Introduction</a></li>
+          <li><a href="#ch2">Chapter 2: Application layer</a></li>
+          <li><a href="#ch3">Chapter 3: Transport layer</a></li>
+        </ol>
+      </nav>
+      <article class="article" id="exercises"></article>
+    </div>
+  </main>
+  <script src="assets/engine.js"></script>
+  <script src="assets/common.js"></script>
+  <script src="data/questions/intro.js"></script>
+  <script src="data/questions/internet.js"></script>
+  <script src="data/questions/http.js"></script>
+  <script src="data/questions/dns.js"></script>
+  <script src="data/questions/sockets.js"></script>
+  <script src="data/questions/transport.js"></script>
+  <script src="data/questions/udp.js"></script>
+  <script src="data/questions/rdt.js"></script>
+  <script src="data/questions/tcp.js"></script>
+  <script src="data/exercises.js"></script>
+  <script>
+  (function () {
+    const Study = window.Study;
+    const CHAPTERS = [[1, 'Chapter 1: Introduction'], [2, 'Chapter 2: Application layer'], [3, 'Chapter 3: Transport layer']];
+    const textbookCount = Study.quizPool().filter(question => question.source === 'textbook').length;
+    document.getElementById('quiz-link').textContent = 'Quiz me on the textbook questions (' + textbookCount + ')';
+
+    function exerciseHTML(exercise) {
+      return '<div class="ex" data-ex="' + Study.esc(exercise.id) + '">' +
+        '<div class="ex-head"><span class="ex-num">' + Study.esc(exercise.number) + '</span><span class="ex-topic">' + Study.esc(exercise.title) + '</span><label class="ex-done"><input type="checkbox"> Done</label></div>' +
+        '<p class="ex-prompt">' + Study.md(exercise.prompt) + '</p>' +
+        '<details><summary>Show worked solution</summary>' +
+        '<p class="ex-answer">Answer: ' + Study.md(exercise.answer) + '</p>' +
+        exercise.solution.map(step => '<p>' + Study.md(step) + '</p>').join('') +
+        '</details></div>';
+    }
+
+    document.getElementById('exercises').innerHTML = CHAPTERS.map(chapter =>
+      '<section id="ch' + chapter[0] + '"><h2>' + Study.esc(chapter[1]) + '</h2>' +
+      window.EXERCISES.filter(exercise => exercise.chapter === chapter[0]).map(exerciseHTML).join('') + '</section>').join('');
+
+    const exerciseBlocks = Array.from(document.querySelectorAll('.ex'));
+    let done = new Set(Study.store.get('reviewDone', []));
+
+    function update() {
+      exerciseBlocks.forEach(block => {
+        const isDone = done.has(block.dataset.ex);
+        block.classList.toggle('is-done', isDone);
+        block.querySelector('.ex-done input').checked = isDone;
+      });
+      const doneCount = exerciseBlocks.filter(block => done.has(block.dataset.ex)).length;
+      document.getElementById('done-count').textContent = doneCount + ' of ' + exerciseBlocks.length;
+      document.getElementById('done-bar').style.width = (100 * doneCount / exerciseBlocks.length) + '%';
+    }
+
+    exerciseBlocks.forEach(block => block.querySelector('.ex-done input').addEventListener('change', event => {
+      if (event.target.checked) done.add(block.dataset.ex);
+      else done.delete(block.dataset.ex);
+      Study.store.set('reviewDone', Array.from(done));
+      update();
+    }));
+    update();
+  })();
+  </script>
+</body>
+</html>
